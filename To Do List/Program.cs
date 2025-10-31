@@ -15,6 +15,10 @@ namespace To_Do_List
 {
     internal class Program
     {
+        
+        static bool completedUsedLast = false;
+        static bool deletedUsedLast = false;
+
         static void Main(string[] args)
         {
             Queue<string> tasks = new Queue<string>();
@@ -62,6 +66,7 @@ namespace To_Do_List
 
                         case 2:
                             ViewTasks(tasks,completedTask, stack);
+                            
                             break;
 
                         case 3:
@@ -109,6 +114,7 @@ namespace To_Do_List
 
         static void ViewTasks(Queue<string> task , Queue<string> completedTask, Stack<string> stack)
         {
+            Console.Clear();
       
             while (true)
             {
@@ -120,22 +126,26 @@ namespace To_Do_List
                     return;
                 }
 
-                Thread.Sleep(1000);
-                Console.Clear();
+                Thread.Sleep(500);
+                
 
                 Console.WriteLine("____________");
                 Console.WriteLine("Pending tasks:");
+
                 int i = 1;
+
                 foreach (var t in task)
                 {
                     Console.WriteLine($"{i++}. {t}");
                 }
 
+                int y = 1;
+
                 Console.WriteLine("____________");
                 Console.WriteLine("Completed Tasks");
                 foreach (var c in completedTask)
                 {
-                    Console.WriteLine($"{i++}. {c}");
+                    Console.WriteLine($"{y++}. {c}");
                 }
                 Console.WriteLine("____________");
                 Console.WriteLine($"Tasks in stack: {stack.Count}");
@@ -145,42 +155,57 @@ namespace To_Do_List
 
                 Console.WriteLine("""
                     1. Complete Task
-                    2. Delete Task?
+                    2. Delete Task
                     3. Undo
-                    4. Back
+                    4. Clear Stack
+                    5. Back
                     """);
-                int option = Convert.ToInt32(Console.ReadLine());
 
-                switch(option) 
+                try
                 {
-                    case 1:
-                        CompleteTask(task,completedTask,stack);
-                        Thread.Sleep(300);
-                        Console.Clear();
-                        break; 
-                    case 2: 
-                        DeleteTask(task, stack);
-                        Thread.Sleep(500);
-                        Console.Clear();
-                        break; 
-                    case 3:
-                        
-                        UndoTask(task, completedTask, stack);
-                        
-                        break;
-                        
+                    int option = Convert.ToInt32(Console.ReadLine());
 
-                    case 4:
-                        Thread.Sleep(300);
-                        Console.Clear();
-                        return;
+                    switch (option)
+                    {
+                        case 1:
+                            CompleteTask(task, completedTask, stack);
+                            Thread.Sleep(300);
+                            
+                            break;
+                        case 2:
+                            DeleteTask(task, stack);
+                            Thread.Sleep(700);
+                            
+                            break;
+                        case 3:
+                            UndoTask(task, completedTask, stack);
+                            Thread.Sleep(700);
+
+                            break;
+
+                        case 4:
+                            Console.Clear();
+                            ClearStack(stack);
+                            Thread.Sleep(600);
+                            Console.Clear();
+                            break;
 
 
-                    default:
-                        Console.WriteLine("Invalid option");
-                        break;
+                        case 5:
+                            Thread.Sleep(300);
+                            Console.Clear();
+                            return;
 
-                        
+
+                        default:
+                            Console.WriteLine("Invalid option");
+                            break;
+
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.ToString());
                 }
 
             }
@@ -196,18 +221,38 @@ namespace To_Do_List
             string completedTask = task.Dequeue();
             stack.Push(completedTask);
             completedTasks.Enqueue(completedTask);
+
+            // update the shared flags
+            completedUsedLast = true;
+            deletedUsedLast = false;
+
             Console.WriteLine("Completed task: " + completedTask);
+
         }
         static void DeleteTask(Queue<string> task, Stack<string> stack )
         {
-            if (task.Count == 0)
+           Queue<string> newQ = new Queue<string>();
+            while (task.Count > 1)
             {
-                Console.WriteLine("No tasks to delete!");
-                return;
+                var newTask=task.Dequeue();
+                newQ.Enqueue(newTask);
             }
-            string deletedTask = task.Dequeue();
-            stack.Push(deletedTask);
-            Console.WriteLine("Deleted Task: " + deletedTask);
+
+            var lastTask=task.Dequeue();
+            stack.Push(lastTask);
+
+            foreach (var item in newQ)
+            {
+                task.Enqueue(item);
+            }
+
+            // update shared flags
+            deletedUsedLast = true;
+            completedUsedLast = false;
+
+            Console.Clear();
+            Console.WriteLine("Task: " + lastTask + " removed");
+
 
         }
 
@@ -216,37 +261,123 @@ namespace To_Do_List
             if (stack.Count > 0)
             {
 
-                string undoneTask = stack.Peek();
-
-                if (completedtask.Count > 0 && undoneTask == completedtask.Peek())
+                if (!deletedUsedLast && completedUsedLast)
                 {
-                    completedtask.Dequeue();
+                    string undoneTask = stack.Peek();
+
+                    if (completedtask.Count > 0)
+                    {
+                        completedtask.Dequeue();
+                    }
+
+                    var newQueue = new Queue<string>();
+                    newQueue.Enqueue(undoneTask);
+
+                    foreach (string item in task)
+                    {
+                        newQueue.Enqueue(item);
+                    }
+
+
+                    task.Clear();
+
+                    foreach (string item in newQueue)
+                    {
+                        task.Enqueue(item);
+                    }
+
+                    stack.Pop();
+                    Console.Clear();
+                    Console.WriteLine("Undid task " + undoneTask);
+
+                    
+                    completedUsedLast = false;
+                    deletedUsedLast = false;
                 }
 
+                else if(completedUsedLast == false && deletedUsedLast == true)
                 
-                var newQueue = new Queue<string>();
-                newQueue.Enqueue(undoneTask);
-                foreach (string item in task)
                 {
-                    newQueue.Enqueue(item);
-                }
+                    string undoneTask = stack.Peek();         
 
-                
-                task.Clear();
-                foreach (string item in newQueue)
-                {
-                    task.Enqueue(item);
-                }
+                    var newQueue = new Queue<string>();
 
-                stack.Pop();
-                Console.Clear();
-                Console.WriteLine("Undid task " + undoneTask);
+                    foreach (string item in task)
+                    {
+                        newQueue.Enqueue(item);
+                    }
+
+                    newQueue.Enqueue(undoneTask);
+
+                    task.Clear();
+                    foreach (string item in newQueue)
+                    {
+                        task.Enqueue(item);
+                    }
+
+                    stack.Pop();
+                    Console.Clear();
+                    Console.WriteLine("Undid task " + undoneTask);
+
+                    // update flags
+                    deletedUsedLast = false;
+                    completedUsedLast = false;
+
+                }
             }
             else
             {
                 Console.WriteLine("No deleted Tasks");
             }
             
+        }
+
+        static void ClearStack(Stack<string> stack)
+        {
+            Console.WriteLine("""
+                Are you sure you want to clear the stack? 
+                The stack contains the following tasks:
+                """);
+
+            foreach (string item in stack)
+            {
+                Console.WriteLine(item);
+            }
+
+            Console.WriteLine("""
+                1: Yes
+                2 :No (Cancel)
+                """);
+
+            try
+            {
+
+                int option = Convert.ToInt32(Console.ReadLine());
+
+                switch (option)
+                {
+                    case 1:
+                        stack.Clear();
+                        Console.Clear();
+                        Console.WriteLine("Stack Cleared.");
+
+                        break;
+                    case 2:
+                        return;
+
+
+                    default:
+                        Console.WriteLine("Invalid option");
+                        break;
+
+
+                }
+            }
+            catch (FormatException ex)
+
+            {
+                Console.WriteLine(ex.ToString());
+            }
         }
     }
 }
