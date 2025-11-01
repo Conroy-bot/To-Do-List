@@ -16,14 +16,17 @@ namespace To_Do_List
     internal class Program
     {
         
-        static bool completedUsedLast = false;
-        static bool deletedUsedLast = false;
+        //static bool completedUsedLast = false;
+        //static bool deletedUsedLast = false;
+        
 
         static void Main(string[] args)
         {
-            Queue<string> tasks = new Queue<string>();
-            Queue<string> completedTask = new Queue<string>();
-            Stack<string> stack = new Stack<string>();
+            Queue<string> tasks = new();
+            Queue<string> completedTask = new();
+            Stack<string> stack = new();
+            Stack<char> trackStack = new();
+
 
             string task1 = "Clean Bathroom";
             string task2 = "Clean Kitchen";
@@ -65,7 +68,7 @@ namespace To_Do_List
                             break;
 
                         case 2:
-                            ViewTasks(tasks,completedTask, stack);
+                            ViewTasks(tasks,completedTask, stack,trackStack);
                             
                             break;
 
@@ -112,7 +115,7 @@ namespace To_Do_List
             task.Enqueue(toDo);
         }
 
-        static void ViewTasks(Queue<string> task , Queue<string> completedTask, Stack<string> stack)
+        static void ViewTasks(Queue<string> task , Queue<string> completedTask, Stack<string> stack, Stack<char> trackStack)
         {
             Console.Clear();
       
@@ -168,17 +171,17 @@ namespace To_Do_List
                     switch (option)
                     {
                         case 1:
-                            CompleteTask(task, completedTask, stack);
+                            CompleteTask(task, completedTask, stack,trackStack);
                             Thread.Sleep(300);
                             
                             break;
                         case 2:
-                            DeleteTask(task, stack);
+                            DeleteTask(task, stack,trackStack);
                             Thread.Sleep(700);
                             
                             break;
                         case 3:
-                            UndoTask(task, completedTask, stack);
+                            UndoTask(task, completedTask, stack,trackStack);
                             Thread.Sleep(700);
 
                             break;
@@ -187,7 +190,7 @@ namespace To_Do_List
                             Console.Clear();
                             ClearStack(stack);
                             Thread.Sleep(600);
-                            Console.Clear();
+                            
                             break;
 
 
@@ -211,7 +214,7 @@ namespace To_Do_List
             }
         }
 
-        static void CompleteTask(Queue<string> task, Queue<string> completedTasks, Stack<string> stack)
+        static void CompleteTask(Queue<string> task, Queue<string> completedTasks, Stack<string> stack, Stack<char> trackStack)
         {
             if (task.Count == 0 )
             {
@@ -220,16 +223,15 @@ namespace To_Do_List
             }
             string completedTask = task.Dequeue();
             stack.Push(completedTask);
+            trackStack.Push('C');
             completedTasks.Enqueue(completedTask);
 
-            // update the shared flags
-            completedUsedLast = true;
-            deletedUsedLast = false;
 
+            Console.Clear();
             Console.WriteLine("Completed task: " + completedTask);
 
         }
-        static void DeleteTask(Queue<string> task, Stack<string> stack )
+        static void DeleteTask(Queue<string> task, Stack<string> stack, Stack<char> trackStack)
         {
            Queue<string> newQ = new Queue<string>();
             while (task.Count > 1)
@@ -240,6 +242,7 @@ namespace To_Do_List
 
             var lastTask=task.Dequeue();
             stack.Push(lastTask);
+            trackStack.Push('D');
 
             foreach (var item in newQ)
             {
@@ -256,12 +259,12 @@ namespace To_Do_List
 
         }
 
-        static void UndoTask(Queue<string> task,Queue <string> completedtask, Stack<string> stack)
+        static void UndoTask(Queue<string> task,Queue <string> completedtask, Stack<string> stack, Stack<char> trackStack)
         {
             if (stack.Count > 0)
             {
 
-                if (!deletedUsedLast && completedUsedLast)
+                if (trackStack.Peek() =='C')
                 {
                     string undoneTask = stack.Peek();
 
@@ -287,15 +290,15 @@ namespace To_Do_List
                     }
 
                     stack.Pop();
+                    trackStack.Pop();
                     Console.Clear();
                     Console.WriteLine("Undid task " + undoneTask);
 
                     
-                    completedUsedLast = false;
-                    deletedUsedLast = false;
+                
                 }
 
-                else if(completedUsedLast == false && deletedUsedLast == true)
+                else if(trackStack.Peek() == 'D')
                 
                 {
                     string undoneTask = stack.Peek();         
@@ -316,67 +319,75 @@ namespace To_Do_List
                     }
 
                     stack.Pop();
+                    trackStack.Pop();
                     Console.Clear();
                     Console.WriteLine("Undid task " + undoneTask);
 
-                    // update flags
-                    deletedUsedLast = false;
-                    completedUsedLast = false;
+                 
 
                 }
             }
             else
             {
-                Console.WriteLine("No deleted Tasks");
+                Console.Clear() ;
+                Console.WriteLine("No tasks in stack found.");
             }
             
         }
 
         static void ClearStack(Stack<string> stack)
         {
-            Console.WriteLine("""
+            if (stack.Count > 0)
+            {
+                Console.WriteLine("""
                 Are you sure you want to clear the stack? 
                 The stack contains the following tasks:
                 """);
 
-            foreach (string item in stack)
-            {
-                Console.WriteLine(item);
-            }
+                foreach (string item in stack)
+                {
+                    Console.WriteLine(item);
+                }
 
-            Console.WriteLine("""
+                Console.WriteLine("""
                 1: Yes
                 2 :No (Cancel)
                 """);
 
-            try
-            {
-
-                int option = Convert.ToInt32(Console.ReadLine());
-
-                switch (option)
+                try
                 {
-                    case 1:
-                        stack.Clear();
-                        Console.Clear();
-                        Console.WriteLine("Stack Cleared.");
 
-                        break;
-                    case 2:
-                        return;
+                    int option = Convert.ToInt32(Console.ReadLine());
+
+                    switch (option)
+                    {
+                        case 1:
+                            stack.Clear();
+                            Console.Clear();
+                            Console.WriteLine("Stack Cleared.");
+
+                            break;
+                        case 2:
+                            return;
 
 
-                    default:
-                        Console.WriteLine("Invalid option");
-                        break;
+                        default:
+                            Console.WriteLine("Invalid option");
+                            break;
 
 
+                    }
+                }
+                catch (FormatException ex)
+
+                {
+                    Console.WriteLine(ex.ToString());
                 }
             }
-            catch (FormatException ex)
-
+            else
             {
-                Console.WriteLine(ex.ToString());
+                Console.WriteLine("There are no items in the stack.");
+                Thread.Sleep(400);
             }
         }
     }
