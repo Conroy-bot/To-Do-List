@@ -35,60 +35,7 @@ namespace To_Do_List
             tasks.Enqueue(task2);
             tasks.Enqueue(task3);
 
-            while (true)
-            {
-
-                Console.WriteLine("To Do List");
-                Console.WriteLine("""
-                    1. Add Task
-                    2. View tasks
-                    3. Exit
-                    """);
-
-                Console.Write("Choose an option: ");
-                string? raw = Console.ReadLine();                      
-                if (string.IsNullOrWhiteSpace(raw))
-                {
-                    Console.WriteLine("No input entered. Please choose an option.");
-                    continue; // show menu again
-                }
-
-                if (!int.TryParse(raw, out int option))
-                {
-                    Console.WriteLine("Invalid input. Enter a number for the option.");
-                    continue; // show menu again
-                }
-
-                try
-                {
-                    switch (option)
-                    {
-                        case 1:
-                            AddTask(tasks);
-                            break;
-
-                        case 2:
-                            ViewTasks(tasks,completedTask, stack,trackStack);
-                            
-                            break;
-
-                        case 3:
-                            Exit();
-                            break;
-
-                        default:
-                            Console.WriteLine("Unknown option. Please choose 1, 2 or 3.");
-                            break;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine(ex.ToString());
-                    Console.WriteLine("An error occurred: " + ex.Message);
-                }
-
-                
-            }
+            ViewTasks(tasks, completedTask, stack, trackStack);
         }
 
         static void Exit()
@@ -111,14 +58,14 @@ namespace To_Do_List
             }
             Thread.Sleep(300);
             Console.Clear();
-            Console.WriteLine("Added task: " + toDo);
+            Console.WriteLine("Added task: " + toDo+"\n");
             task.Enqueue(toDo);
         }
 
         static void ViewTasks(Queue<string> task , Queue<string> completedTask, Stack<string> stack, Stack<char> trackStack)
         {
             Console.Clear();
-      
+            
             while (true)
             {
                 if (task.Count == 0 && completedTask.Count == 0 && stack.Count==0)
@@ -130,8 +77,8 @@ namespace To_Do_List
                 }
 
                 Thread.Sleep(500);
-                
 
+                Console.WriteLine("To Do List:");
                 Console.WriteLine("____________");
                 Console.WriteLine("Pending tasks:");
 
@@ -157,11 +104,12 @@ namespace To_Do_List
 
 
                 Console.WriteLine("""
-                    1. Complete Task
-                    2. Delete Task
-                    3. Undo
-                    4. Clear Stack
-                    5. Back
+                    1. AddTask
+                    2. Complete Task
+                    3. Delete Task
+                    4. Undo
+                    5. Clear Stack
+                    6. Back
                     """);
 
                 try
@@ -171,38 +119,43 @@ namespace To_Do_List
                     switch (option)
                     {
                         case 1:
-                            CompleteTask(task, completedTask, stack,trackStack);
-                            Thread.Sleep(300);
-                            
+                            Console.Clear();
+                            AddTask(task);
                             break;
                         case 2:
-                            DeleteTask(task, stack,trackStack);
-                            Thread.Sleep(700);
-                            
-                            break;
-                        case 3:
-                            UndoTask(task, completedTask, stack,trackStack);
-                            Thread.Sleep(700);
+                        CompleteTask(task, completedTask, stack, trackStack);
+                        Thread.Sleep(300);
 
-                            break;
+                        break;
+                    case 3:
+                        DeleteTask(task, stack, trackStack);
+                        Thread.Sleep(700);
 
-                        case 4:
-                            Console.Clear();
-                            ClearStack(stack);
-                            Thread.Sleep(600);
-                            
-                            break;
+                        break;
+                    case 4:
+                        UndoTask(task, completedTask, stack, trackStack);
+                        Thread.Sleep(700);
+
+                        break;
+
+                    case 5:
+                        Console.Clear();
+                        Exit();
+                        Thread.Sleep(600);
+
+                        break;
 
 
-                        case 5:
-                            Thread.Sleep(300);
-                            Console.Clear();
-                            return;
+                    case 6:
+                        Thread.Sleep(300);
+                        Console.Clear();
+                        Environment.Exit(0);
+                        return;
 
 
-                        default:
-                            Console.WriteLine("Invalid option");
-                            break;
+                    default:
+                        Console.WriteLine("Invalid option");
+                        break;
 
                     }
                 }
@@ -249,9 +202,7 @@ namespace To_Do_List
                 task.Enqueue(item);
             }
 
-            // update shared flags
-            deletedUsedLast = true;
-            completedUsedLast = false;
+
 
             Console.Clear();
             Console.WriteLine("Task: " + lastTask + " removed");
