@@ -10,5 +10,9 @@ The list gets completed from the front and deleted from the back
 3. Run the application using F5
 4. A console window will then open up where you can use the app
 
-https://github.com/user-attachments/assets/bdb72ddd-b34d-4194-bdeb-0ac896de260d
+
+
+https://github.com/user-attachments/assets/c1eb7a5a-f468-42e6-ae27-bfc2f8aef7dd
+
+
 
