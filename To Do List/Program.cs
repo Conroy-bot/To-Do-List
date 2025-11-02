@@ -23,6 +23,7 @@ namespace To_Do_List
 
         static void Main(string[] args)
         {
+            Console.Title = "To do List";
             Queue<string> tasks = new();
             Queue<string> completedTask = new();
             Stack<string> stack = new();
@@ -76,11 +77,11 @@ namespace To_Do_List
 
 
                 Console.WriteLine("""
-                    1. AddTask
+                    1. Add Task
                     2. Complete Task
                     3. Delete Task
                     4. Undo
-                    5. Clear Undos
+                    5. View undo history
                     6. Back
                     Input choice here:
                     """);
@@ -93,7 +94,7 @@ namespace To_Do_List
                     {
                         case 1:
                             Console.Clear();
-                            AddTask(tasks, stack,trackStack);
+                            AddTask(tasks, stack, trackStack);
                             break;
                         case 2:
                             CompleteTask(tasks, completedTask, stack, trackStack);
@@ -135,6 +136,7 @@ namespace To_Do_List
                 catch (Exception ex)
                 {
                     Console.WriteLine(ex.ToString());
+                    Console.Clear();
                 }
 
 
@@ -148,7 +150,7 @@ namespace To_Do_List
             }
 
 
-            static void AddTask(Queue<string> task, Stack<string> stack, Stack< char > trackStack)
+            static void AddTask(Queue<string> task, Stack<string> stack, Stack<char> trackStack)
             {
                 Console.Write("Please input a task you need to do: ");
                 string? toDo = Console.ReadLine();
@@ -213,105 +215,120 @@ namespace To_Do_List
 
             static void UndoTask(Queue<string> task, Queue<string> completedtask, Stack<string> stack, Stack<char> trackStack)
             {
-                if (stack.Count > 0)
+                try
                 {
-                    switch (trackStack.Peek())
+                    if (stack.Count > 0)
                     {
-                        case 'C':
-                            string undoneTask = stack.Peek();
+                        switch (trackStack.Peek())
+                        {
+                            case 'C':
+                                string undoneTask = stack.Peek();
 
-                            if (completedtask.Count > 0)
-                            {
-                                completedtask.Dequeue();
-                            }
+                                if (completedtask.Count > 0)
+                                {
+                                    completedtask.Dequeue();
+                                }
 
-                            var newQueue = new Queue<string>();
-                            newQueue.Enqueue(undoneTask);
+                                var newQueue = new Queue<string>();
+                                newQueue.Enqueue(undoneTask);
 
-                            foreach (string item in task)
-                            {
-                                newQueue.Enqueue(item);
-                            }
-
-
-                            task.Clear();
-
-                            foreach (string item in newQueue)
-                            {
-                                task.Enqueue(item);
-                            }
-
-                            stack.Pop();
-                            trackStack.Pop();
-                            Console.Clear();
-                            Console.WriteLine("Undid task " + undoneTask);
-                            break;
-
-                        case 'D':
-
-                            undoneTask = stack.Peek();
-
-                            newQueue = new Queue<string>();
-
-                            foreach (string item in task)
-                            {
-                                newQueue.Enqueue(item);
-                            }
-
-                            newQueue.Enqueue(undoneTask);
-
-                            task.Clear();
-                            foreach (string item in newQueue)
-                            {
-                                task.Enqueue(item);
-                            }
-
-                            stack.Pop();
-                            trackStack.Pop();
-                            Console.Clear();
-                            Console.WriteLine("Undid task " + undoneTask);
-                            break;
+                                foreach (string item in task)
+                                {
+                                    newQueue.Enqueue(item);
+                                }
 
 
-                        case 'A':
-                            string addedTask = stack.Peek();
+                                task.Clear();
 
-                            List<string> added = new();
+                                foreach (string item in newQueue)
+                                {
+                                    task.Enqueue(item);
+                                }
 
-                            newQueue = new Queue<string>();
+                                stack.Pop();
+                                trackStack.Pop();
+                                Console.Clear();
+                                Console.WriteLine("Undid task " + undoneTask);
+                                break;
 
-                           foreach(string item in task)
-                            {
-                                added.Add(item);
-                            }
+                            case 'D':
 
-                           added.RemoveAt(added.Count-1);
+                                undoneTask = stack.Peek();
 
-                            task.Clear();
+                                newQueue = new Queue<string>();
 
-                            foreach (string item in added)
-                            {
-                                task.Enqueue(item);
-                            }
+                                foreach (string item in task)
+                                {
+                                    newQueue.Enqueue(item);
+                                }
 
-                            stack.Pop();
-                            trackStack.Pop();
-                            Console.Clear();
-                            Console.WriteLine("Undid task " + addedTask);
-                            break;
+                                newQueue.Enqueue(undoneTask);
+
+                                task.Clear();
+                                foreach (string item in newQueue)
+                                {
+                                    task.Enqueue(item);
+                                }
+
+                                stack.Pop();
+                                trackStack.Pop();
+                                Console.Clear();
+                                Console.WriteLine("Undid task " + undoneTask);
+                                break;
+
+
+                            case 'A':
+                                string addedTask = stack.Peek();
+
+                                List<string> added = new();
+
+                                newQueue = new Queue<string>();
+
+                                foreach (string item in task)
+                                {
+                                    added.Add(item);
+                                }
+
+                                added.RemoveAt(added.Count - 1);
+
+                                task.Clear();
+
+                                foreach (string item in added)
+                                {
+                                    task.Enqueue(item);
+                                }
+
+                                stack.Pop();
+                                trackStack.Pop();
+                                Console.Clear();
+                                Console.WriteLine("Undid task " + addedTask);
+                                break;
 
 
 
-                        default:
-                            Console.Clear();
-                            Console.WriteLine("No tasks to undo.");
-                            break;
+                            default:
+                                Console.Clear();
+                                Console.WriteLine("Please choose a valid option");
+                                break;
+                        }
+
                     }
 
-
+                    else
+                    {
+                        Console.Clear();
+                        Console.WriteLine("No tasks to undo.");
+                        
+                    }
 
                 }
-            }
+                catch (Exception)
+                {
+                    Console.WriteLine("Please input a choice");
+                    Console.Clear();
+                }
+
+            } 
         }
 
              static void ClearStack(Stack<string> stack, Stack<char> trackStack)
@@ -319,89 +336,75 @@ namespace To_Do_List
                 if (stack.Count > 0)
                 {
                     Console.WriteLine("""
-                Are you sure you want to clear your undos? 
-                The stack contains the following tasks:
+                Are you sure you want to clear your history? 
+                The history contains the following tasks:
+                (most recent first)
                 """);
 
-                List<char> characters = [.. trackStack];
-                List<string> listOfTasks = [.. stack];
-                Stack<string> shownTasks = new();
+                    string[] tasksArray = stack.ToArray();
+                    char[] charsArray = trackStack.ToArray();
 
-                Dictionary<char, string> dictionary = new Dictionary<char, string>();
-                for (int i = 0;i<listOfTasks.Count;i++)
-                {
-                   
-                    dictionary[characters[i]] = listOfTasks[i];
+                    int count = Math.Min(tasksArray.Length, charsArray.Length);
+
                     
-                    if (dictionary.ContainsKey('A'))
+                    List<string> shownTasks = new();
+                    for (int i = 0; i < count; i++)
                     {
-                        string holder = dictionary[characters[i]].ToString();
-                        
-                        shownTasks.Push(holder+"- Added");
-                    }
-                    else if (dictionary.ContainsKey('D'))
-                    {
-                        string holder = dictionary[characters[i]].ToString();
-                        
-                        shownTasks.Push(holder + "- Deleted");
-                    }
+                        string taskItem = tasksArray[i];
+                        char marker = charsArray[i];
 
-                    else if (dictionary.ContainsKey('C'))
-                    {
-                        string holder = dictionary[characters[i]].ToString();
-                        
-                        shownTasks.Push(holder + "- Completed");
+                        string label = marker switch
+                        {
+                            'A' => "Added",
+                            'D' => "Deleted",
+                            'C' => "Completed",
+                            _ => "Unknown"
+                        };
+
+                        shownTasks.Add($"{taskItem} - {label}");
                     }
 
-
-                }
-
-
-
-                int j = 1;
-
-                foreach (string item in shownTasks)
+                    int j = 1;
+                    foreach (string item in shownTasks)
                     {
                         Console.WriteLine($"{j++}. {item}");
                     }
 
                     Console.WriteLine("""
+                
+                Choice-
                 1: Yes
                 2 :No (Cancel)
                 """);
 
                     try
                     {
-
                         int option = Convert.ToInt32(Console.ReadLine());
 
                         switch (option)
                         {
                             case 1:
                                 stack.Clear();
+                                trackStack.Clear();
                                 Console.Clear();
-                                Console.WriteLine("Stack Cleared.");
-
-                            break;
+                                Console.WriteLine("History Cleared.");
+                                break;
                             case 2:
+                                Console.Clear();
                                 return;
-
                             default:
                                 Console.WriteLine("Invalid option");
                                 break;
-
-
                         }
                     }
                     catch (FormatException ex)
-
                     {
                         Console.WriteLine(ex.ToString());
                     }
                 }
                 else
                 {
-                    Console.WriteLine("There are no items in the stack.");
+                    Console.WriteLine("There are no items in your history.");
                     Thread.Sleep(400);
                 }
             }
