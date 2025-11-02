@@ -1,24 +1,25 @@
-﻿using Microsoft.VisualBasic.FileIO;
+﻿using Microsoft.VisualBasic;
+using Microsoft.VisualBasic.FileIO;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
+using System.Linq;
 using System.Security.AccessControl;
+using System.Security.Cryptography;
+using System.Threading.Tasks;
 using System.Transactions;
 using System.Xml;
-using System.Collections.Generic;
-using System.Linq;
-using System.IO;
-using System.Security.Cryptography;
-using Microsoft.VisualBasic;
 
 
 namespace To_Do_List
 {
     internal class Program
     {
-        
+
         //static bool completedUsedLast = false;
         //static bool deletedUsedLast = false;
-        
+
 
         static void Main(string[] args)
         {
@@ -35,40 +36,11 @@ namespace To_Do_List
             tasks.Enqueue(task2);
             tasks.Enqueue(task3);
 
-            ViewTasks(tasks, completedTask, stack, trackStack);
-        }
-
-        static void Exit()
-        {
-            Console.WriteLine("Thank you for using the to do list\nNow exiting program");
-            Environment.Exit(0);
-        }
-
-        
-        static void AddTask(Queue<string> task)
-        {
-            Console.Write("Please input a task you need to do: ");
-            string? toDo = Console.ReadLine();
-            if (string.IsNullOrWhiteSpace(toDo))
-            {
-                Console.WriteLine("No task entered.");
-                Thread.Sleep(1000);
-                Console.Clear();
-                return;
-            }
-            Thread.Sleep(300);
             Console.Clear();
-            Console.WriteLine("Added task: " + toDo+"\n");
-            task.Enqueue(toDo);
-        }
 
-        static void ViewTasks(Queue<string> task , Queue<string> completedTask, Stack<string> stack, Stack<char> trackStack)
-        {
-            Console.Clear();
-            
             while (true)
             {
-                if (task.Count == 0 && completedTask.Count == 0 && stack.Count==0)
+                if (tasks.Count == 0 && completedTask.Count == 0 && stack.Count == 0)
                 {
                     Console.WriteLine("No tasks in the list.");
                     Thread.Sleep(1000);
@@ -84,7 +56,7 @@ namespace To_Do_List
 
                 int i = 1;
 
-                foreach (var t in task)
+                foreach (var t in tasks)
                 {
                     Console.WriteLine($"{i++}. {t}");
                 }
@@ -98,7 +70,7 @@ namespace To_Do_List
                     Console.WriteLine($"{y++}. {c}");
                 }
                 Console.WriteLine("____________");
-                Console.WriteLine($"Tasks in stack: {stack.Count}");
+                Console.WriteLine($"Undo's: {stack.Count}");
                 Console.WriteLine("____________");
 
 
@@ -108,8 +80,9 @@ namespace To_Do_List
                     2. Complete Task
                     3. Delete Task
                     4. Undo
-                    5. Clear Stack
+                    5. Clear Undos
                     6. Back
+                    Input choice here:
                     """);
 
                 try
@@ -120,42 +93,42 @@ namespace To_Do_List
                     {
                         case 1:
                             Console.Clear();
-                            AddTask(task);
+                            AddTask(tasks, stack,trackStack);
                             break;
                         case 2:
-                        CompleteTask(task, completedTask, stack, trackStack);
-                        Thread.Sleep(300);
+                            CompleteTask(tasks, completedTask, stack, trackStack);
+                            Thread.Sleep(300);
 
-                        break;
-                    case 3:
-                        DeleteTask(task, stack, trackStack);
-                        Thread.Sleep(700);
+                            break;
+                        case 3:
+                            DeleteTask(tasks, stack, trackStack);
+                            Thread.Sleep(700);
 
-                        break;
-                    case 4:
-                        UndoTask(task, completedTask, stack, trackStack);
-                        Thread.Sleep(700);
+                            break;
+                        case 4:
+                            UndoTask(tasks, completedTask, stack, trackStack);
+                            Thread.Sleep(700);
 
-                        break;
+                            break;
 
-                    case 5:
-                        Console.Clear();
-                        Exit();
-                        Thread.Sleep(600);
+                        case 5:
+                            Console.Clear();
+                            ClearStack(stack, trackStack);
+                            Thread.Sleep(600);
 
-                        break;
-
-
-                    case 6:
-                        Thread.Sleep(300);
-                        Console.Clear();
-                        Environment.Exit(0);
-                        return;
+                            break;
 
 
-                    default:
-                        Console.WriteLine("Invalid option");
-                        break;
+                        case 6:
+                            Thread.Sleep(300);
+                            Console.Clear();
+                            Exit();
+                            return;
+
+
+                        default:
+                            Console.WriteLine("Invalid option");
+                            break;
 
                     }
                 }
@@ -164,182 +137,274 @@ namespace To_Do_List
                     Console.WriteLine(ex.ToString());
                 }
 
-            }
-        }
-
-        static void CompleteTask(Queue<string> task, Queue<string> completedTasks, Stack<string> stack, Stack<char> trackStack)
-        {
-            if (task.Count == 0 )
-            {
-                Console.WriteLine("No tasks to complete!");
-                return;
-            }
-            string completedTask = task.Dequeue();
-            stack.Push(completedTask);
-            trackStack.Push('C');
-            completedTasks.Enqueue(completedTask);
 
 
-            Console.Clear();
-            Console.WriteLine("Completed task: " + completedTask);
-
-        }
-        static void DeleteTask(Queue<string> task, Stack<string> stack, Stack<char> trackStack)
-        {
-           Queue<string> newQ = new Queue<string>();
-            while (task.Count > 1)
-            {
-                var newTask=task.Dequeue();
-                newQ.Enqueue(newTask);
             }
 
-            var lastTask=task.Dequeue();
-            stack.Push(lastTask);
-            trackStack.Push('D');
-
-            foreach (var item in newQ)
+            static void Exit()
             {
-                task.Enqueue(item);
+                Console.WriteLine("Thank you for using the to do list\nNow exiting program");
+                Environment.Exit(0);
             }
 
 
-
-            Console.Clear();
-            Console.WriteLine("Task: " + lastTask + " removed");
-
-
-        }
-
-        static void UndoTask(Queue<string> task,Queue <string> completedtask, Stack<string> stack, Stack<char> trackStack)
-        {
-            if (stack.Count > 0)
+            static void AddTask(Queue<string> task, Stack<string> stack, Stack< char > trackStack)
             {
-
-                if (trackStack.Peek() =='C')
+                Console.Write("Please input a task you need to do: ");
+                string? toDo = Console.ReadLine();
+                if (string.IsNullOrWhiteSpace(toDo))
                 {
-                    string undoneTask = stack.Peek();
-
-                    if (completedtask.Count > 0)
-                    {
-                        completedtask.Dequeue();
-                    }
-
-                    var newQueue = new Queue<string>();
-                    newQueue.Enqueue(undoneTask);
-
-                    foreach (string item in task)
-                    {
-                        newQueue.Enqueue(item);
-                    }
-
-
-                    task.Clear();
-
-                    foreach (string item in newQueue)
-                    {
-                        task.Enqueue(item);
-                    }
-
-                    stack.Pop();
-                    trackStack.Pop();
+                    Console.WriteLine("No task entered.");
+                    Thread.Sleep(1000);
                     Console.Clear();
-                    Console.WriteLine("Undid task " + undoneTask);
+                    return;
+                }
+                Thread.Sleep(300);
+                Console.Clear();
+                Console.WriteLine("Added task: " + toDo + "\n");
+                stack.Push(toDo);
+                trackStack.Push('A');
+                task.Enqueue(toDo);
+            }
 
-                    
-                
+
+            static void CompleteTask(Queue<string> task, Queue<string> completedTasks, Stack<string> stack, Stack<char> trackStack)
+            {
+                if (task.Count == 0)
+                {
+                    Console.WriteLine("No tasks to complete!");
+                    return;
+                }
+                string completedTask = task.Dequeue();
+                stack.Push(completedTask);
+                trackStack.Push('C');
+                completedTasks.Enqueue(completedTask);
+
+
+                Console.Clear();
+                Console.WriteLine("Completed task: " + completedTask);
+
+            }
+            static void DeleteTask(Queue<string> task, Stack<string> stack, Stack<char> trackStack)
+            {
+                Queue<string> newQ = new Queue<string>();
+                while (task.Count > 1)
+                {
+                    var newTask = task.Dequeue();
+                    newQ.Enqueue(newTask);
                 }
 
-                else if(trackStack.Peek() == 'D')
-                
+                var lastTask = task.Dequeue();
+                stack.Push(lastTask);
+                trackStack.Push('D');
+
+                foreach (var item in newQ)
                 {
-                    string undoneTask = stack.Peek();         
+                    task.Enqueue(item);
+                }
 
-                    var newQueue = new Queue<string>();
 
-                    foreach (string item in task)
+
+                Console.Clear();
+                Console.WriteLine("Task: " + lastTask + " removed");
+
+
+            }
+
+            static void UndoTask(Queue<string> task, Queue<string> completedtask, Stack<string> stack, Stack<char> trackStack)
+            {
+                if (stack.Count > 0)
+                {
+                    switch (trackStack.Peek())
                     {
-                        newQueue.Enqueue(item);
+                        case 'C':
+                            string undoneTask = stack.Peek();
+
+                            if (completedtask.Count > 0)
+                            {
+                                completedtask.Dequeue();
+                            }
+
+                            var newQueue = new Queue<string>();
+                            newQueue.Enqueue(undoneTask);
+
+                            foreach (string item in task)
+                            {
+                                newQueue.Enqueue(item);
+                            }
+
+
+                            task.Clear();
+
+                            foreach (string item in newQueue)
+                            {
+                                task.Enqueue(item);
+                            }
+
+                            stack.Pop();
+                            trackStack.Pop();
+                            Console.Clear();
+                            Console.WriteLine("Undid task " + undoneTask);
+                            break;
+
+                        case 'D':
+
+                            undoneTask = stack.Peek();
+
+                            newQueue = new Queue<string>();
+
+                            foreach (string item in task)
+                            {
+                                newQueue.Enqueue(item);
+                            }
+
+                            newQueue.Enqueue(undoneTask);
+
+                            task.Clear();
+                            foreach (string item in newQueue)
+                            {
+                                task.Enqueue(item);
+                            }
+
+                            stack.Pop();
+                            trackStack.Pop();
+                            Console.Clear();
+                            Console.WriteLine("Undid task " + undoneTask);
+                            break;
+
+
+                        case 'A':
+                            string addedTask = stack.Peek();
+
+                            List<string> added = new();
+
+                            newQueue = new Queue<string>();
+
+                           foreach(string item in task)
+                            {
+                                added.Add(item);
+                            }
+
+                           added.RemoveAt(added.Count-1);
+
+                            task.Clear();
+
+                            foreach (string item in added)
+                            {
+                                task.Enqueue(item);
+                            }
+
+                            stack.Pop();
+                            trackStack.Pop();
+                            Console.Clear();
+                            Console.WriteLine("Undid task " + addedTask);
+                            break;
+
+
+
+                        default:
+                            Console.Clear();
+                            Console.WriteLine("No tasks to undo.");
+                            break;
                     }
 
-                    newQueue.Enqueue(undoneTask);
 
-                    task.Clear();
-                    foreach (string item in newQueue)
-                    {
-                        task.Enqueue(item);
-                    }
-
-                    stack.Pop();
-                    trackStack.Pop();
-                    Console.Clear();
-                    Console.WriteLine("Undid task " + undoneTask);
-
-                 
 
                 }
             }
-            else
-            {
-                Console.Clear() ;
-                Console.WriteLine("No tasks in stack found.");
-            }
-            
         }
 
-        static void ClearStack(Stack<string> stack)
-        {
-            if (stack.Count > 0)
+             static void ClearStack(Stack<string> stack, Stack<char> trackStack)
             {
-                Console.WriteLine("""
-                Are you sure you want to clear the stack? 
+                if (stack.Count > 0)
+                {
+                    Console.WriteLine("""
+                Are you sure you want to clear your undos? 
                 The stack contains the following tasks:
                 """);
 
-                foreach (string item in stack)
+                List<char> characters = [.. trackStack];
+                List<string> listOfTasks = [.. stack];
+                Stack<string> shownTasks = new();
+
+                Dictionary<char, string> dictionary = new Dictionary<char, string>();
+                for (int i = 0;i<listOfTasks.Count;i++)
                 {
-                    Console.WriteLine(item);
+                   
+                    dictionary[characters[i]] = listOfTasks[i];
+                    
+                    if (dictionary.ContainsKey('A'))
+                    {
+                        string holder = dictionary[characters[i]].ToString();
+                        
+                        shownTasks.Push(holder+"- Added");
+                    }
+                    else if (dictionary.ContainsKey('D'))
+                    {
+                        string holder = dictionary[characters[i]].ToString();
+                        
+                        shownTasks.Push(holder + "- Deleted");
+                    }
+
+                    else if (dictionary.ContainsKey('C'))
+                    {
+                        string holder = dictionary[characters[i]].ToString();
+                        
+                        shownTasks.Push(holder + "- Completed");
+                    }
+
+
                 }
 
-                Console.WriteLine("""
+
+
+                int j = 1;
+
+                foreach (string item in shownTasks)
+                    {
+                        Console.WriteLine($"{j++}. {item}");
+                    }
+
+                    Console.WriteLine("""
                 1: Yes
                 2 :No (Cancel)
                 """);
 
-                try
-                {
-
-                    int option = Convert.ToInt32(Console.ReadLine());
-
-                    switch (option)
+                    try
                     {
-                        case 1:
-                            stack.Clear();
-                            Console.Clear();
-                            Console.WriteLine("Stack Cleared.");
+
+                        int option = Convert.ToInt32(Console.ReadLine());
+
+                        switch (option)
+                        {
+                            case 1:
+                                stack.Clear();
+                                Console.Clear();
+                                Console.WriteLine("Stack Cleared.");
 
                             break;
-                        case 2:
-                            return;
+                            case 2:
+                                return;
+
+                            default:
+                                Console.WriteLine("Invalid option");
+                                break;
 
 
-                        default:
-                            Console.WriteLine("Invalid option");
-                            break;
+                        }
+                    }
+                    catch (FormatException ex)
 
-
+                    {
+                        Console.WriteLine(ex.ToString());
                     }
                 }
-                catch (FormatException ex)
-
+                else
                 {
-                    Console.WriteLine(ex.ToString());
+                    Console.WriteLine("There are no items in the stack.");
+                    Thread.Sleep(400);
                 }
-            }
-            else
-            {
-                Console.WriteLine("There are no items in the stack.");
-                Thread.Sleep(400);
             }
         }
     }
-}
+
